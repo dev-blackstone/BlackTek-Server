@@ -3,6 +3,8 @@
 **.sln
 **.vcxproj
 **.vcxproj.user
+*.exe
+*.dll
 
 # Build Output
 /build
@@ -12,6 +14,7 @@
 
 # Personal Config File
 config.lua
+/data/world
 
 # CLion and other JetBrains tools
 /.idea
