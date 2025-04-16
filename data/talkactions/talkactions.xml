@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <talkactions>
 	<!-- commands -->
+	<talkaction words="/debug" script="debug.lua" />
 	<talkaction words="/save" script="server_save.lua" />
 	<talkaction words="/attr" separator=" " script="attributes.lua" />
 	<talkaction words="/ban" separator=" " script="ban.lua" />

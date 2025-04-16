@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<monster name="Warlord Ruzad" nameDescription="Warlord Ruzad" race="blood" experience="2000" speed="270">
+	<health now="2500" max="2500" />
+	<look type="2" corpse="6008" />
+	<targetchange interval="2000" chance="10" />
+	<flags>
+		<flag summonable="0" />
+		<flag attackable="1" />
+		<flag hostile="1" />
+		<flag illusionable="0" />
+		<flag convinceable="0" />
+		<flag pushable="0" />
+		<flag canpushitems="1" />
+		<flag canpushcreatures="1" />
+		<flag targetdistance="1" />
+		<flag staticattack="90" />
+		<flag runonhealth="0" />
+		<flag isboss="1" />
+	</flags>
+	<attacks>
+		<attack name="melee" interval="2000" min="0" max="-300" />
+	</attacks>
+	<defenses armor="32" defense="35" />
+	<elements>
+		<element firePercent="80" />
+		<element energyPercent="30" />
+		<element holyPercent="10" />
+		<element earthPercent="-10" />
+		<element deathPercent="-10" />
+	</elements>
+	<immunities>
+		<immunity invisible="1" />
+		<immunity paralyze="1" />
+		<immunity drunk="1" />
+	</immunities>
+	<summons maxSummons="3">
+		<summon name="Orc Berserker" interval="2000" chance="30" />
+	</summons>
+	<loot>
+		<item id="2478" chance="18000" /> <!-- brass legs -->
+		<item id="2148" countmax="59" chance="25000" /> <!-- gold coin -->
+		<item id="2428" chance="8000" /> <!-- orcish axe -->
+		<item id="2463" chance="12000" /> <!-- plate armor -->
+		<item id="2377" chance="9000" /> <!-- two handed sword -->
+		<item id="2666" chance="12000" /> <!-- meat -->
+		<item id="3965" chance="5200" /> <!-- hunting spear -->
+		<item id="2419" chance="5200" /> <!-- scimitar -->
+		<item id="2647" chance="5200" /> <!-- plate legs -->
+		<item id="2490" chance="15000" /> <!-- dark helmet -->
+		<item id="2399" countmax="14" chance="24000" /> <!-- throwing star -->
+		<item id="2667" chance="45000" /> <!-- fish -->
+		<item id="12435" chance="15000" /> <!-- orc leather -->
+		<item id="2200" chance="8000" /> <!-- protection amulet -->
+		<item id="7891" chance="2400" /> <!-- magma boots -->
+	</loot>
+</monster>

@@ -1,0 +1,75 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<monster name="The Old Widow" nameDescription="The Old Widow" race="venom" experience="4200" speed="240">
+	<health now="3200" max="3200" />
+	<look type="208" corpse="5977" />
+	<targetchange interval="5000" chance="8" />
+	<flags>
+		<flag summonable="0" />
+		<flag attackable="1" />
+		<flag hostile="1" />
+		<flag illusionable="0" />
+		<flag convinceable="0" />
+		<flag pushable="0" />
+		<flag canpushitems="1" />
+		<flag canpushcreatures="1" />
+		<flag targetdistance="1" />
+		<flag staticattack="90" />
+		<flag runonhealth="0" />
+		<flag canwalkonfire="0" />
+		<flag isboss="1" />
+	</flags>
+	<attacks>
+		<attack name="melee" interval="2000" min="0" max="-700" poison="160" />
+		<attack name="earth" interval="1000" chance="15" range="7" min="-200" max="-350">
+			<attribute key="shootEffect" value="poison" />
+			<attribute key="areaEffect" value="poison" />
+		</attack>
+		<attack name="speed" interval="1000" chance="20" range="7" speedchange="-850" duration="25000">
+			<attribute key="shootEffect" value="poison" />
+			<attribute key="areaEffect" value="poison" />
+		</attack>
+		<attack name="poisonfield" interval="1000" chance="10" range="7" radius="4" target="1">
+			<attribute key="shootEffect" value="poison" />
+		</attack>
+	</attacks>
+	<defenses armor="45" defense="45">
+		<defense name="healing" interval="1000" chance="17" min="225" max="275">
+			<attribute key="areaEffect" value="blueshimmer" />
+		</defense>
+		<defense name="speed" interval="1000" chance="8" speedchange="345" duration="6000">
+			<attribute key="areaEffect" value="redshimmer" />
+		</defense>
+	</defenses>
+	<elements>
+		<element energyPercent="10" />
+		<element physicalPercent="20" />
+		<element firePercent="20" />
+	</elements>
+	<immunities>
+		<immunity earth="1" />
+		<immunity lifedrain="1" />
+		<immunity outfit="1" />
+		<immunity drunk="1" />
+		<immunity invisible="1" />
+	</immunities>
+	<summons maxSummons="2">
+		<summon name="giant spider" interval="1000" chance="13" />
+	</summons>
+	<loot>
+		<item id="2148" countmax="100" chance="99000" /> <!-- gold coin -->
+		<item id="2152" countmax="10" chance="99000" /> <!-- platinum coin -->
+		<item id="5879" countmax="4" chance="87000" /> <!-- spider silk -->
+		<item id="5924" chance="55000" /> <!-- damaged steel helmet -->
+		<item id="7591" countmax="4" chance="66000" /> <!-- great health potion -->
+		<item id="2476" chance="13000" /> <!-- knight armor -->
+		<item id="2169" chance="11000" /> <!-- time ring -->
+		<item id="2204" chance="16000" /> <!-- energy ring (magic shield) -->
+		<item id="2165" chance="16000" /> <!-- stealth ring -->
+		<item id="2477" chance="9000" /> <!-- knight legs -->
+		<item id="13307" chance="15000" /> <!-- sweet smelling bait -->
+		<item id="2171" chance="9000" /> <!-- platinum amulet -->
+		<item id="5886" chance="8900" /> <!-- spool of yarn -->
+		<item id="7419" chance="1300" /> <!-- dreaded cleaver -->
+		<item id="7416" chance="500" /> <!-- bloody edge -->
+	</loot>
+</monster>

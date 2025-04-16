@@ -1,0 +1,77 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<monster name="Mad Mage" nameDescription="a mad mage" race="blood" experience="1800" speed="240">
+	<health now="2500" max="2500" />
+	<look type="394" corpse="13603" />
+	<targetchange interval="5000" chance="30" />
+	<flags>
+		<flag summonable="0" />
+		<flag attackable="1" />
+		<flag hostile="1" />
+		<flag illusionable="0" />
+		<flag convinceable="0" />
+		<flag pushable="0" />
+		<flag canpushitems="1" />
+		<flag canpushcreatures="1" />
+		<flag targetdistance="4" />
+		<flag staticattack="90" />
+		<flag runonhealth="1000" />
+		<flag isboss="1" />
+	</flags>
+	<attacks>
+		<attack name="melee" interval="2000" min="0" max="-78" />
+		<attack name="fire" interval="1000" chance="12" range="7" target="1" min="-50" max="-185">
+			<attribute key="shootEffect" value="fire" />
+		</attack>
+		<attack name="manadrain" interval="1400" chance="24" range="6" min="-30" max="-90">
+			<attribute key="shootEffect" value="ice" />
+		</attack>
+		<attack name="firefield" interval="1600" chance="20" range="7" radius="2" target="1">
+			<attribute key="shootEffect" value="fire" />
+		</attack>
+		<attack name="energy" interval="1900" chance="18" length="8" spread="0" min="-70" max="-150">
+			<attribute key="areaEffect" value="bigclouds" />
+		</attack>
+	</attacks>
+	<defenses armor="20" defense="20">
+		<defense name="healing" interval="1000" chance="25" min="35" max="80">
+			<attribute key="areaEffect" value="blueshimmer" />
+		</defense>
+	</defenses>
+	<elements>
+		<element physicalPercent="-20" />
+		<element holyPercent="-10" />
+		<element earthPercent="50" />
+	</elements>
+	<immunities>
+		<immunity energy="1" />
+		<immunity outfit="1" />
+		<immunity paralyze="1" />
+		<immunity drunk="1" />
+		<immunity invisible="1" />
+	</immunities>
+	<summons maxSummons="1">
+		<summon name="stone golem" interval="1000" chance="10" />
+	</summons>
+	<loot>
+		<item id="2148" countmax="340" chance="100000" /> <!-- gold coin -->
+		<item id="7588" countmax="5" chance="73000" /> <!-- strong health potion -->
+		<item id="2152" countmax="5" chance="60000" /> <!-- platinum coin -->
+		<item id="7589" countmax="5" chance="27000" /> <!-- strong mana potion -->
+		<item id="2165" chance="26000" /> <!-- stealth ring -->
+		<item id="7368" countmax="5" chance="6600" /> <!-- assassin star -->
+		<item id="2178" chance="13000" /> <!-- mind stone -->
+		<item id="5911" chance="13000" /> <!-- red piece of cloth -->
+		<item id="2150" countmax="3" chance="13000" /> <!-- small amethyst -->
+		<item id="2114" chance="6600" /> <!-- piggy bank -->
+		<item id="2792" countmax="3" chance="8000" /> <!-- dark mushroom -->
+		<item id="12410" chance="4000" /> <!-- luminous orb -->
+		<item id="7443" chance="8000" /> <!-- bullseye potion -->
+		<item id="9941" chance="3000" /> <!-- crystal of focus -->
+		<item id="8901" chance="2500" /> <!-- spellbook of warding -->
+		<item id="2123" chance="1000" /> <!-- ring of the sky -->
+		<item id="2195" chance="900" /> <!-- boots of haste -->
+		<item id="7898" chance="2300" /> <!-- lightning robe -->
+		<item id="5741" chance="1000" /> <!-- skull helmet -->
+		<item id="13756" chance="4000" /> <!-- mage's cap -->
+	</loot>
+</monster>

@@ -5675,32 +5675,18 @@ CreatureType_t Player::getCreatureType(const MonsterPtr& monster) const
 static ModifierTotals getValidatedTotals(const std::vector<std::shared_ptr<DamageModifier>>& modifierList, const CombatType_t damageType, const CombatOrigin originType, const CreatureType_t creatureType, const RaceType_t race, const std::string_view creatureName) {
 	uint16_t percent = 0;
 	uint16_t flat = 0;
-	// to-do: const and auto&
-	for (auto& modifier : modifierList) {
-
+	for (const auto& modifier : modifierList) {
 		if (modifier->appliesToDamage(damageType) && modifier->appliesToOrigin(originType) && modifier->appliesToTarget(creatureType, race, creatureName)) {
-			if (modifier->isFlatValue() && modifier->getChance() == 0 || modifier->isFlatValue() && modifier->getChance() == 100) {
+			if (modifier->getChance() == 0 || modifier->getChance() == 100 || modifier->getChance() >= uniform_random(1, 100)) {
+				if (modifier->isFlatValue()) {
 					flat += modifier->getValue();
-					continue;
-			} else if (modifier->isFlatValue()) {
-				if (modifier->getChance() >= uniform_random(1, 100)) {
-					flat += modifier->getValue();
-					continue;
 				}
-			}
-
-			if (modifier->isPercent() && modifier->getChance() == 0 || modifier->isPercent() && modifier->getChance() == 100) {
-				percent += modifier->getValue();
-				continue;
-			} else if (modifier->isPercent()) {
-				if (modifier->getChance() >= uniform_random(1, 100)) {
+				else if (modifier->isPercent()) {
 					percent += modifier->getValue();
-					continue;
 				}
 			}
 		}
 	}
-	percent = std::clamp<uint16_t>(percent, 0, 100);
 	return ModifierTotals(flat, percent);
 }
 
@@ -5769,9 +5755,6 @@ gtl::node_hash_map<uint8_t, ModifierTotals> Player::getConvertedTotals(const uin
 {
 	gtl::node_hash_map<uint8_t, ModifierTotals> playerList;
 	playerList.reserve(COMBAT_COUNT);
-
-	gtl::node_hash_map<uint8_t, ModifierTotals> itemList;
-	itemList.reserve(COMBAT_COUNT);
 	
 	[[unlikely]]
 	if ((modType != ATTACK_MODIFIER_CONVERSION) && (modType != DEFENSE_MODIFIER_REFORM)) {
@@ -5784,30 +5767,20 @@ gtl::node_hash_map<uint8_t, ModifierTotals> Player::getConvertedTotals(const uin
 			const auto& modifiers = modType == ATTACK_MODIFIER_CONVERSION ? aug->getAttackModifiers(modType) : aug->getDefenseModifiers(modType);
 			for (const auto& modifier : modifiers) {
 				if (modifier->appliesToDamage(damageType) && modifier->appliesToOrigin(originType) && modifier->appliesToTarget(creatureType, race, creatureName)) {
-
-					uint16_t flat = 0;
 					uint16_t percent = 0;
-
-					if (modifier->isFlatValue() && modifier->getChance() == 0 || modifier->isFlatValue() && modifier->getChance() == 100) {
-						flat += modifier->getValue();
-					} else if (modifier->isFlatValue()) {
-						if (modifier->getChance() >= uniform_random(1, 100)) {
+					uint16_t flat = 0;
+					if (modifier->getChance() == 0 || modifier->getChance() == 100 || modifier->getChance() >= uniform_random(1, 100)) {
+						if (modifier->isFlatValue()) {
 							flat += modifier->getValue();
 						}
-					}
-
-					if (modifier->isPercent() && modifier->getChance() == 0 || modifier->isPercent() && modifier->getChance() == 100) {
-						percent += modifier->getValue();
-					} else if (modifier->isPercent()) {
-						if (modifier->getChance() >= uniform_random(1, 100)) {
+						else if (modifier->isPercent()) {
 							percent += modifier->getValue();
 						}
 					}
-
-					percent = std::min<uint16_t>(percent, 100);
-					const auto& index = combatTypeToIndex(modifier->getConversionType());
-					if (auto [it, inserted] = playerList.try_emplace(index, ModifierTotals{flat, percent}); !inserted) {
-						it->second += ModifierTotals{flat, percent};
+					const auto& conversionType = modifier->getConversionType();
+					const auto index = combatTypeToIndex(conversionType == COMBAT_NONE ? damageType : conversionType);
+					if (auto [it, inserted] = playerList.try_emplace(index, ModifierTotals{ flat, percent }); !inserted) {
+						it->second += ModifierTotals{ flat, percent };
 					}
 				}
 			}
@@ -5820,30 +5793,20 @@ gtl::node_hash_map<uint8_t, ModifierTotals> Player::getConvertedTotals(const uin
 				const auto& modifiers = modType == ATTACK_MODIFIER_CONVERSION ? aug->getAttackModifiers(modType) : aug->getDefenseModifiers(modType);
 				for (const auto& modifier : modifiers) {
 					if (modifier->appliesToDamage(damageType) && modifier->appliesToOrigin(originType) && modifier->appliesToTarget(creatureType, race, creatureName)) {
-
-						uint16_t flat = 0;
 						uint16_t percent = 0;
-
-						if (modifier->isFlatValue() && modifier->getChance() == 0 || modifier->isFlatValue() && modifier->getChance() == 100) {
-							flat += modifier->getValue();
-						} else if (modifier->isFlatValue()) {
-							if (modifier->getChance() >= uniform_random(1, 100)) {
+						uint16_t flat = 0;
+						if (modifier->getChance() == 0 || modifier->getChance() == 100 || modifier->getChance() >= uniform_random(1, 100)) {
+							if (modifier->isFlatValue()) {
 								flat += modifier->getValue();
 							}
-						}
-
-						if (modifier->isPercent() && modifier->getChance() == 0 || modifier->isPercent() && modifier->getChance() == 100) {
-							percent += modifier->getValue();
-						} else if (modifier->isPercent()) {
-							if (modifier->getChance() >= uniform_random(1, 100)) {
+							else if (modifier->isPercent()) {
 								percent += modifier->getValue();
 							}
 						}
-						
-						percent = std::min<uint16_t>(percent, 100);
-						const auto index = combatTypeToIndex(modifier->getConversionType());
-						if (auto [it, inserted] = playerList.try_emplace(index, ModifierTotals{flat, percent}); !inserted) {
-							it->second += ModifierTotals{flat, percent};
+						const auto& conversionType = modifier->getConversionType();
+						const auto index = combatTypeToIndex(conversionType == COMBAT_NONE ? damageType : conversionType);
+						if (auto [it, inserted] = playerList.try_emplace(index, ModifierTotals{ flat, percent }); !inserted) {
+							it->second += ModifierTotals{ flat, percent };
 						}
 					}
 				}
@@ -6225,7 +6188,6 @@ void Player::convertDamage(const CreaturePtr& target, CombatDamage& originalDama
 	auto iter = conversionList.begin();
 
 	while (originalDamage.primary.value < 0 && iter != conversionList.end()) {
-
 		const CombatType_t combatType = indexToCombatType(iter->first);
 		const ModifierTotals& totals = iter->second;
 
@@ -6234,19 +6196,18 @@ void Player::convertDamage(const CreaturePtr& target, CombatDamage& originalDama
 		const int32_t flat = static_cast<int32_t>(totals.flatTotal);
 		const int32_t originalDamageValue = std::abs(originalDamage.primary.value);
 		if (percent) {
-			convertedDamage += originalDamageValue  * percent / 100;
+			convertedDamage += originalDamageValue * float(percent / 100);
 		}
 		if (flat) {
 			convertedDamage += flat;
 		}
 
 		if (convertedDamage != 0 && target) {
-			convertedDamage = std::min<int32_t>(convertedDamage, originalDamageValue);
-			originalDamage.primary.value += convertedDamage;
+			originalDamage.primary.value = 0;
 			
 			auto converted = CombatDamage{};
 			converted.primary.type = combatType;
-			converted.primary.value = (0 - convertedDamage);
+			converted.primary.value =  -convertedDamage;
 			converted.origin = ORIGIN_AUGMENT;
 			converted.augmented = true;
 
@@ -6254,7 +6215,7 @@ void Player::convertDamage(const CreaturePtr& target, CombatDamage& originalDama
 			params.combatType = combatType;
 			params.origin = ORIGIN_AUGMENT;
 			
-			auto message = "You converted " + std::to_string(convertedDamage) + " " + getCombatName(originalDamage.primary.type) + " damage to " + getCombatName(combatType) + " during an attack on " + target->getName() + ".";
+			auto message = "You converted " + std::to_string(originalDamageValue) + " " + getCombatName(originalDamage.primary.type) + " damage to " + std::to_string(convertedDamage) + " " + getCombatName(combatType) + " damage during an attack on " + target->getName() + ".";
 			sendTextMessage(MESSAGE_DAMAGE_DEALT, message);
 			Combat::doTargetCombat(this->getPlayer(), target, converted, params);
 		}

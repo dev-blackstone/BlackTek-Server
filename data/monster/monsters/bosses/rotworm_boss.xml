@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<monster name="Rotworm King" nameDescription="the rotworm king" race="blood" experience="750" speed="190">
+	<health now="500" max="500" />
+	<look type="192" corpse="6069" />
+	<targetchange interval="3000" chance="10" />
+	<flags>
+		<flag summonable="0" />
+		<flag attackable="1" />
+		<flag hostile="1" />
+		<flag illusionable="0" />
+		<flag convinceable="0" />
+		<flag pushable="0" />
+		<flag canpushitems="1" />
+		<flag staticattack="50" />
+		<flag targetdistance="1" />
+		<flag runonhealth="0" />
+		<flag isboss="1" />
+	</flags>
+	<attacks>
+		<attack name="melee" interval="2000" min="-40" max="-120" />
+		<attack name="death" interval="2000" chance="20" range="6" min="-10" max="-80">
+			<attribute key="shootEffect" value="suddendeath" />
+			<attribute key="areaEffect" value="mortarea" />
+		</attack>
+	</attacks>
+	<defenses armor="20" defense="30">
+		<defense name="healing" interval="2000" chance="20" min="10" max="40">
+			<attribute key="areaEffect" value="blueshimmer" />
+		</defense>
+	</defenses>
+	<voices interval="5000" chance="10">
+		<voice sentence="MINE!" />
+		<voice sentence="NO PRISONERS!" />
+		<voice sentence="NO MERCY!" />
+		<voice sentence="By Bolg's blood!" />
+		<voice sentence="You're no match for me!" />
+	</voices>
+	<immunities>
+		<immunity paralyze="1" />
+		<immunity drunk="1" />
+		<immunity invisible="1" />
+	</immunities>
+	<loot>
+		<item id="2152" countmax="4" chance="40000" /> <!-- platinum coin -->
+		<item id="2666" countmin="2" countmax="5" chance="60000" /> <!-- meat -->
+		<item id="2671" countmax="3" chance="50000" /> <!-- ham -->
+		<item id="2383" chance="5000" /> <!-- spike sword -->
+		<item id="2417" chance="5000" /> <!-- battle hammer -->
+		<item id="2378" chance="5000" /> <!-- battle axe -->
+		<item id="2513" chance="5000" /> <!-- battle shield -->
+		<item id="2186" chance="5000" /> <!-- moonlight rod -->
+		<item id="2191" chance="5000" /> <!-- wand of dragonbreath -->
+		<item id="7618" countmax="2" chance="35000" /> <!-- health potion -->
+		<item id="7620" countmax="2" chance="35000" /> <!-- mana potion -->
+	</loot>
+</monster>

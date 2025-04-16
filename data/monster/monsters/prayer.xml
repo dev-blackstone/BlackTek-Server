@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<monster name="Prayer" nameDescription="a prayer" race="blood" experience="0" speed="124" manacost="220">
+	<health now="240" max="240" />
+	<look type="57" corpse="20371" />
+	<targetchange interval="2000" chance="20" />
+	<flags>
+		<flag summonable="0" />
+		<flag attackable="0" />
+		<flag hostile="0" />
+		<flag illusionable="0" />
+		<flag convinceable="0" />
+		<flag pushable="1" />
+		<flag canpushitems="0" />
+		<flag canpushcreatures="0" />
+		<flag targetdistance="2" />
+		<flag staticattack="90" />
+		<flag runonhealth="8" />
+		<flag canwalkonenergy="0" />
+		<flag canwalkonfire="0" />
+		<flag canwalkonpoison="0" />
+	</flags>
+	<defenses armor="1" defense="1" />
+	<voices interval="2000" chance="60">
+		<voice sentence="The demons are coming!" />
+		<voice sentence="People do vanish, we are all going to die!" />
+		<voice sentence="Leave this island, as long as you can!" />
+		<voice sentence="The queen has died, we will never find her corpse!" />
+		<voice sentence="Devils have come to take our lifes!" />
+	</voices>
+</monster>

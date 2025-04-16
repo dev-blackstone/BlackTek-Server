@@ -815,7 +815,6 @@ void Combat::doTargetCombat(const CreaturePtr& caster, const CreaturePtr& target
 	if (caster) {
 		if (caster->isPlayer() and target) {
 			const auto& casterPlayer = caster->getPlayer();
-			attackModData.reserve(ATTACK_MODIFIER_LAST);
 			auto targetType = CREATURETYPE_ATTACKABLE;
 			// to-do: this is ugly, lets make it a function and assign its return to the variable above instead.
 			if (target->getMonster()) {
@@ -824,9 +823,10 @@ void Combat::doTargetCombat(const CreaturePtr& caster, const CreaturePtr& target
 			else if (target->getPlayer()) {
 				targetType = CREATURETYPE_PLAYER;
 			}
+			// Apply augments for all other modifiers first before converting the damage
+			attackModData.reserve(ATTACK_MODIFIER_LAST);
 			attackModData = casterPlayer->getAttackModifierTotals(damage.primary.type, damage.origin, targetType, target->getRace(), target->getName());
 			/// we do conversion here incase someone wants to convert say healing to mana or mana to death.
-
 			const auto& conversionTotals = casterPlayer->getConvertedTotals(ATTACK_MODIFIER_CONVERSION, damage.primary.type, damage.origin, targetType, target->getRace(), target->getName());
 			if (!conversionTotals.empty() and not isAugmented) {
 				casterPlayer->convertDamage(target->getCreature(), damage, conversionTotals);
@@ -834,7 +834,6 @@ void Combat::doTargetCombat(const CreaturePtr& caster, const CreaturePtr& target
 					return;
 				}
 			}
-
 			if (damage.primary.type != COMBAT_MANADRAIN and damage.primary.type != COMBAT_HEALING) {
 				// to-do: checking against origin for augment is too limiting.. Lets make piercing like crit and leech, ect.
 				if (!attackModData.empty() and params.origin != ORIGIN_PIERCING) {

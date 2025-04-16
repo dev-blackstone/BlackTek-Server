@@ -1,0 +1,83 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<monster name="Shadowpelt" nameDescription="shadowpelt the leader of werebears" race="blood" experience="4600" speed="240">
+	<health now="6000" max="6000" />
+	<look type="720" corpse="24666" />
+	<targetchange interval="2000" chance="5" />
+	<flags>
+		<flag attackable="1" />
+		<flag hostile="1" />
+		<flag summonable="0" />
+		<flag convinceable="0" />
+		<flag illusionable="0" />
+		<flag ignorespawnblock="0" />
+		<flag pushable="0" />
+		<flag canpushitems="1" />
+		<flag canpushcreatures="1" />
+		<flag staticattack="90" />
+		<flag targetdistance="1" />
+		<flag canwalkonenergy="1" />
+		<flag canwalkonfire="0" />
+		<flag canwalkonpoison="1" />
+		<flag isboss="1" />
+	</flags>
+	<attacks>
+		<attack name="melee" interval="1800" min="0" max="-400" />
+		<attack name="speed" interval="4000" chance="20" radius="7" target="1" speedchange="-120">
+			<attribute key="areaEffect" value="poff" />
+		</attack>
+		<attack name="lifedrain" interval="2000" chance="15" target="0" radius="4" min="-85" max="-385">
+			<attribute key="areaEffect" value="greenshimmer" />
+		</attack>
+	</attacks>
+	<defenses armor="30" defense="30">
+		<defense name="healing" interval="2000" chance="25" min="50" max="100">
+			<attribute key="areaEffect" value="blueshimmer" />
+		</defense>
+	</defenses>
+	<immunities>
+		<immunity paralyze="1" />
+		<immunity invisible="1" />
+		<immunity drunk="1" />
+	</immunities>
+	<elements>
+		<element physicalPercent="5" />
+		<element energyPercent="15" />
+		<element earthPercent="50" />
+		<element firePercent="-5" />
+		<element icePercent="10" />
+		<element holyPercent="-5" />
+		<element deathPercent="45" />
+	</elements>
+	<voices interval="5000" chance="10">
+		<voice sentence="GROOOWL" />
+		<voice sentence="YOU MUST DIE" />
+		<voice sentence="GRRR" />
+	</voices>
+	<summons maxSummons="1">
+		<summon name="Werebear" interval="2000" chance="70" />
+	</summons>
+	<loot>
+		<item id="2152" countmin="3" countmax="5" chance="100000" /> <!-- platinum coin -->
+		<item id="24713" chance="100000" /> <!-- werebear fur -->
+		<item id="24712" chance="100000" /> <!-- werebear skull -->
+		<item id="5896" chance="100000" /> <!-- bear paw -->
+		<item id="2144" countmax="2" chance="60000" /> <!-- black pearl -->
+		<item id="7759" countmax="2" chance="46000" /> <!-- small enchanted sapphire -->
+		<item id="24850" countmax="2" chance="39000" /> <!-- opal -->
+		<item id="7591" chance="35000" /> <!-- great health potion -->
+		<item id="8473" chance="12000" /> <!-- ultimate health potion -->
+		<item id="7432" chance="8000" /> <!-- furry club -->
+		<item id="5902" chance="21000" /> <!-- honeycomb -->
+		<item id="7383" chance="1000" /> <!-- relic sword -->
+		<item id="7633" chance="7000" /> <!-- giant shimmering pearl -->
+		<item id="7419" chance="2500" /> <!-- dreaded cleaver -->
+		<item id="7439" chance="5000" /> <!-- berserk potion -->
+		<item id="7452" chance="1000" /> <!-- spiked squelcher -->
+		<item id="24716" chance="3000" /> <!-- werewolf amulet -->
+		<item id="24741" chance="5000" /> <!-- fur armor -->
+		<item id="25172" chance="2000" /> <!-- silver token -->
+		<item id="24740" chance="3000" /> <!-- wolf backpack -->
+		<item id="24759" chance="2000" /> <!-- werebear trophy -->
+		<item id="2197" chance="2000" /> <!-- stone skin amulet -->
+	</loot>
+</monster>

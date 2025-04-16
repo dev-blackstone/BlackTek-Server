@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<monster name="Arthei" nameDescription="arthei" race="undead" experience="4000" speed="370">
+	<health now="4200" max="4200" />
+	<look type="287" corpse="8937" />
+	<targetchange interval="5000" chance="10" />
+	<flags>
+		<flag summonable="0" />
+		<flag attackable="1" />
+		<flag hostile="1" />
+		<flag illusionable="0" />
+		<flag convinceable="0" />
+		<flag pushable="0" />
+		<flag canpushitems="1" />
+		<flag canpushcreatures="1" />
+		<flag targetdistance="1" />
+		<flag staticattack="90" />
+		<flag runonhealth="0" />
+		<flag isboss="1" />
+	</flags>
+	<attacks>
+		<attack name="melee" interval="2000" min="0" max="-600" />
+		<attack name="lifedrain" interval="1000" chance="9" target="0" radius="4" min="-80" max="-200">
+			<attribute key="areaEffect" value="smallclouds" />
+		</attack>
+		<attack name="physical" interval="2000" chance="15" range="7" min="0" max="-130">
+			<attribute key="shootEffect" value="arrow" />
+		</attack>
+	</attacks>
+	<defenses armor="30" defense="30">
+		<defense name="healing" interval="1000" chance="25" min="100" max="220">
+			<attribute key="areaEffect" value="blueshimmer" />
+		</defense>
+		<defense name="invisible" interval="3000" chance="30" duration="6000">
+			<attribute key="areaEffect" value="blueshimmer" />
+		</defense>
+	</defenses>
+	<elements>
+		<element physicalPercent="20" />
+		<element holyPercent="-20" />
+	</elements>
+	<immunities>
+		<immunity lifedrain="1" />
+		<immunity death="1" />
+		<immunity paralyze="1" />
+		<immunity drunk="1" />
+		<immunity invisible="1" />
+	</immunities>
+	<summons maxSummons="3">
+		<summon name="Vampire" interval="3500" chance="70" />
+	</summons>
+	<loot>
+		<item id="2152" countmax="7" chance="70000" /> <!-- platinum coin -->
+		<item id="7588" chance="6000" /> <!-- strong health potion -->
+		<item id="12405" chance="88000" /> <!-- blood preservation -->
+		<item id="2534" chance="1000" /> <!-- vampire shield -->
+		<item id="7419" chance="700" /> <!-- dreaded cleaver -->
+		<item id="2214" chance="16000" /> <!-- ring of healing -->
+	</loot>
+</monster>
