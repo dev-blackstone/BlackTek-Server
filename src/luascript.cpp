@@ -7748,7 +7748,7 @@ int LuaScriptInterface::luaDamageModifierCreate(lua_State* L)
 {	// To-do : DamageModifier(DamageModifier)
 	// DamageModifier(stance, type, value, percent/flat, chance, combatType, originType, creatureType, race)
 	auto stance = getNumber<ModifierStance>(L, 2);
-	auto modType = getNumber<ModifierAttackType>(L, 3);
+	auto modType = getNumber<uint8_t>(L, 3); // ModifierAttackType | ModifierDefenseType
 	auto amount = getNumber<uint16_t>(L, 4);
 	auto factor = getNumber<ModFactor>(L, 5, PERCENT_MODIFIER);
 	auto chance = getNumber<uint8_t>(L, 6, 100);

@@ -827,7 +827,7 @@ void Combat::doTargetCombat(const CreaturePtr& caster, const CreaturePtr& target
 			attackModData.reserve(ATTACK_MODIFIER_LAST);
 			attackModData = casterPlayer->getAttackModifierTotals(damage.primary.type, damage.origin, targetType, target->getRace(), target->getName());
 			/// we do conversion here incase someone wants to convert say healing to mana or mana to death.
-			const auto& conversionTotals = casterPlayer->getConvertedTotals(ATTACK_MODIFIER_CONVERSION, damage.primary.type, damage.origin, targetType, target->getRace(), target->getName());
+			const auto& conversionTotals = casterPlayer->getConvertedTotals(ATTACK_MOD, damage.primary.type, damage.origin, targetType, target->getRace(), target->getName());
 			if (!conversionTotals.empty() and not isAugmented) {
 				casterPlayer->convertDamage(target->getCreature(), damage, conversionTotals);
 				if (damage.primary.value == 0) {
@@ -909,7 +909,7 @@ void Combat::doTargetCombat(const CreaturePtr& caster, const CreaturePtr& target
 
 				if (target->isPlayer() and (caster != target) and not isAugmented) {
 					const auto& targetPlayer = target->getPlayer();
-					const auto& reformTotals = targetPlayer->getConvertedTotals(DEFENSE_MODIFIER_REFORM, damage.primary.type, damage.origin, CREATURETYPE_PLAYER, caster->getRace(), caster->getName());
+					const auto& reformTotals = targetPlayer->getConvertedTotals(DEFENSE_MOD, damage.primary.type, damage.origin, CREATURETYPE_PLAYER, caster->getRace(), caster->getName());
 					if (!reformTotals.empty()) {
 						targetPlayer->reformDamage(casterPlayer->getCreature(), damage, reformTotals);
 						if (damage.primary.value == 0) {
@@ -941,7 +941,7 @@ void Combat::doTargetCombat(const CreaturePtr& caster, const CreaturePtr& target
 				const auto& targetPlayer = target->getPlayer();
 				const auto& attackerType = targetPlayer->getCreatureType(casterMonster->getMonster());
 				const auto& defenseModData = targetPlayer->getDefenseModifierTotals(damage.primary.type, damage.origin, attackerType, casterMonster->getRace(), casterMonster->getName());
-				const auto& reformTotals = targetPlayer->getConvertedTotals(DEFENSE_MODIFIER_REFORM, damage.primary.type, damage.origin, attackerType, casterMonster->getRace(), casterMonster->getName());
+				const auto& reformTotals = targetPlayer->getConvertedTotals(DEFENSE_MOD, damage.primary.type, damage.origin, attackerType, casterMonster->getRace(), casterMonster->getName());
 				if (!reformTotals.empty() and not isAugmented) {
 					targetPlayer->reformDamage(casterMonster->getCreature(), damage, reformTotals);
 					if (damage.primary.value == 0) {

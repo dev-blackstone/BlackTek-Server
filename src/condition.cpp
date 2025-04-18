@@ -1340,7 +1340,7 @@ bool ConditionDamage::doDamage(CreaturePtr creature, int32_t healthChange) const
 			} else if (auto attackMonster = attacker->getMonster()) {
 				creatureType = player->getCreatureType(attackMonster);
 			}
-			auto reformTotals = player->getConvertedTotals(DEFENSE_MODIFIER_REFORM, damage.primary.type, ORIGIN_CONDITION, creatureType, attacker->getRace(), attacker->getName());
+			auto reformTotals = player->getConvertedTotals(DEFENSE_MOD, damage.primary.type, ORIGIN_CONDITION, creatureType, attacker->getRace(), attacker->getName());
 			if (!reformTotals.empty()) {
 				std::cout << "Reform Modifier Activated on " << damage.primary.value << " damage \n";
 				player->reformDamage(attacker, damage, reformTotals);
@@ -1362,7 +1362,7 @@ bool ConditionDamage::doDamage(CreaturePtr creature, int32_t healthChange) const
 			}
 		} else { // no attacker
 
-			auto reformTotals = player->getConvertedTotals(DEFENSE_MODIFIER_REFORM, damage.primary.type, ORIGIN_CONDITION, CREATURETYPE_ATTACKABLE, RACE_NONE, "none");
+			auto reformTotals = player->getConvertedTotals(DEFENSE_MOD, damage.primary.type, ORIGIN_CONDITION, CREATURETYPE_ATTACKABLE, RACE_NONE, "none");
 			if (!reformTotals.empty()) {
 				std::cout << "Reform Modifier Activated on " << damage.primary.value << " damage \n";
 				player->reformDamage(std::nullopt, damage, reformTotals);

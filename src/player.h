@@ -1381,7 +1381,7 @@ class Player final : public Creature, public Cylinder
 		gtl::node_hash_map<uint8_t, std::vector<std::shared_ptr<DamageModifier>>> getAttackModifiers() const;
 		gtl::node_hash_map<uint8_t, std::vector<std::shared_ptr<DamageModifier>>> getDefenseModifiers() const;
 
-		gtl::node_hash_map<uint8_t, ModifierTotals> getConvertedTotals(const uint8_t modType, const CombatType_t damageType, const CombatOrigin originType, const CreatureType_t creatureType, const RaceType_t race, const std::string_view creatureName);
+		gtl::node_hash_map<uint8_t, ModifierTotals> getConvertedTotals(const ModifierStance stance, const CombatType_t damageType, const CombatOrigin originType, const CreatureType_t creatureType, const RaceType_t race, const std::string_view creatureName);
 
 		gtl::node_hash_map<uint8_t, ModifierTotals> getAttackModifierTotals(const CombatType_t damageType, const CombatOrigin originType, const CreatureType_t creatureType, const RaceType_t race, const std::string_view creatureName) const;
 		gtl::node_hash_map<uint8_t, ModifierTotals> getDefenseModifierTotals(const CombatType_t damageType, const CombatOrigin originType, const CreatureType_t creatureType, const RaceType_t race, const std::string_view creatureName) const;
@@ -1415,6 +1415,14 @@ class Player final : public Creature, public Cylinder
 		Position generateAttackPosition(std::optional<CreaturePtr> attacker, Position& defensePosition, CombatOrigin origin);
 
 		std::unique_ptr<AreaCombat> generateDeflectArea(std::optional<CreaturePtr> attacker, int32_t targetCount) const;
+		std::optional <CombatDamage> transformDamage(uint8_t combatTypeIndex, ModifierTotals modifierTotals, const int32_t originalDamageValue);
+		int32_t modifyTotals(const int32_t originalDamageValue, int32_t percent, int32_t flat) const {
+			int32_t transformedDamage = percent ? originalDamageValue * percent / 100 : 0;
+			return flat ? transformedDamage + flat : transformedDamage;
+		}
+		int32_t modifyTotals(const int32_t originalDamageValue, ModifierTotals modifierTotals) const { 
+			return modifyTotals(originalDamageValue, modifierTotals.percentTotal, modifierTotals.flatTotal); 
+		};
 
 	private:
 		std::forward_list<Condition*> getMuteConditions() const;

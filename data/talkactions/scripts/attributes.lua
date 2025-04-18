@@ -18,15 +18,21 @@ function onSay(player, words, param)
 		return false
 	end
 
+	if thing:isItem() and param == "aug" then
+		if thing:addTestAugment() then
+			position:sendMagicEffect(CONST_ME_MAGIC_GREEN)
+		end
+		return
+	end
+	
 	local separatorPos = param:find(',')
 	if not separatorPos then
 		player:sendTextMessage(MESSAGE_STATUS_CONSOLE_BLUE, string.format("Usage: %s attribute, value.", words))
 		return false
 	end
-
+	
 	local attribute = string.trim(param:sub(0, separatorPos - 1))
 	local value = string.trim(param:sub(separatorPos + 1))
-
 	if thing:isItem() then
 		local attributeId = Game.getItemAttributeByName(attribute)
 		if attributeId == ITEM_ATTRIBUTE_NONE then

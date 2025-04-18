@@ -5751,20 +5751,20 @@ gtl::node_hash_map <uint8_t, std::vector<std::shared_ptr<DamageModifier>>> Playe
 	return modifierMap;
 }
 
-gtl::node_hash_map<uint8_t, ModifierTotals> Player::getConvertedTotals(const uint8_t modType, const CombatType_t damageType, const CombatOrigin originType, const CreatureType_t creatureType, const RaceType_t race, const std::string_view creatureName)
+gtl::node_hash_map<uint8_t, ModifierTotals> Player::getConvertedTotals(const ModifierStance stance, const CombatType_t damageType, const CombatOrigin originType, const CreatureType_t creatureType, const RaceType_t race, const std::string_view creatureName)
 {
 	gtl::node_hash_map<uint8_t, ModifierTotals> playerList;
 	playerList.reserve(COMBAT_COUNT);
 	
 	[[unlikely]]
-	if ((modType != ATTACK_MODIFIER_CONVERSION) && (modType != DEFENSE_MODIFIER_REFORM)) {
+	if (stance != ATTACK_MOD && stance != DEFENSE_MOD) {
 		std::cout << "::: WARNING Player::getConvertedTotals called with invalid Mod Type! \n";
 		return playerList;
 	}
 
 	if (!augments.empty()) {
 		for (const auto& aug : augments) {
-			const auto& modifiers = modType == ATTACK_MODIFIER_CONVERSION ? aug->getAttackModifiers(modType) : aug->getDefenseModifiers(modType);
+			const auto& modifiers = stance == ATTACK_MOD ? aug->getAttackModifiers(ATTACK_MODIFIER_CONVERSION) : aug->getDefenseModifiers(DEFENSE_MODIFIER_REFORM);
 			for (const auto& modifier : modifiers) {
 				if (modifier->appliesToDamage(damageType) && modifier->appliesToOrigin(originType) && modifier->appliesToTarget(creatureType, race, creatureName)) {
 					uint16_t percent = 0;
@@ -5790,7 +5790,7 @@ gtl::node_hash_map<uint8_t, ModifierTotals> Player::getConvertedTotals(const uin
 	for (int32_t slot = CONST_SLOT_FIRST; slot <= CONST_SLOT_LAST; ++slot) {
 		if (const auto& item = inventory[slot]; item && !item->getAugments().empty()) {
 			for (const auto& aug : item->getAugments()) {
-				const auto& modifiers = modType == ATTACK_MODIFIER_CONVERSION ? aug->getAttackModifiers(modType) : aug->getDefenseModifiers(modType);
+				const auto& modifiers = stance == ATTACK_MOD ? aug->getAttackModifiers(ATTACK_MODIFIER_CONVERSION) : aug->getDefenseModifiers(DEFENSE_MODIFIER_REFORM);
 				for (const auto& modifier : modifiers) {
 					if (modifier->appliesToDamage(damageType) && modifier->appliesToOrigin(originType) && modifier->appliesToTarget(creatureType, race, creatureName)) {
 						uint16_t percent = 0;
@@ -5813,7 +5813,6 @@ gtl::node_hash_map<uint8_t, ModifierTotals> Player::getConvertedTotals(const uin
 			}
 		}
 	}
-
 	return playerList;
 }
 
@@ -5881,29 +5880,16 @@ void Player::absorbDamage(const std::optional<CreaturePtr> attacker,
 							CombatDamage& originalDamage,
 							int32_t percent,
 							int32_t flat) {
-	int32_t absorbDamage = 0;
-	const int32_t originalDamageValue = std::abs(originalDamage.primary.value);
-	if (percent) {
-		absorbDamage += originalDamageValue  * percent / 100;
-	}
-	if (flat) {
-		absorbDamage += flat;
-	}
-
-	if (absorbDamage != 0) {
-		absorbDamage = std::min<int32_t>(absorbDamage, originalDamageValue);
-		originalDamage.primary.value += absorbDamage;
-
-		auto absorb = CombatDamage{};
-		absorb.leeched = true;
-		absorb.origin = ORIGIN_AUGMENT;
-		absorb.primary.type = COMBAT_HEALING;
-		absorb.primary.value = absorbDamage;
-		absorb.augmented = true;
+	int32_t originalDamageValue = std::abs(originalDamage.primary.value);
+	auto transformed = this->transformDamage(COMBAT_HEALING, ModifierTotals(flat, percent), originalDamageValue);
+	if (transformed.has_value()) {
+		CombatDamage absorb = transformed.value();
+		int32_t absorbedDamage = std::abs(absorb.primary.value);
+		originalDamage.primary.value += std::min<int32_t>(absorbedDamage, originalDamageValue);
 
 		auto absorbParams = CombatParams{};
-		absorbParams.origin = ORIGIN_AUGMENT;
-		absorbParams.combatType = COMBAT_HEALING;
+		absorbParams.combatType = absorb.primary.type;
+		absorbParams.origin = absorb.origin;
 		absorbParams.impactEffect = CONST_ME_MAGIC_RED;
 		absorbParams.distanceEffect = CONST_ANI_NONE;
 
@@ -5920,29 +5906,16 @@ void Player::restoreManaFromDamage(std::optional<CreaturePtr> attacker,
 									CombatDamage& originalDamage,
 									int32_t percent,
 									int32_t flat) {
-	int32_t restoreDamage = 0;
-	const int32_t originalDamageValue = std::abs(originalDamage.primary.value);
-	if (percent) {
-		restoreDamage += originalDamageValue  * percent / 100;
-	}
-	if (flat) {
-		restoreDamage += flat;
-	}
-
-	if (restoreDamage != 0) {
-		restoreDamage = std::min<int32_t>(restoreDamage, originalDamageValue);
-		originalDamage.primary.value += restoreDamage;
-
-		auto restore = CombatDamage{};
-		restore.leeched = true;
-		restore.origin = ORIGIN_AUGMENT;
-		restore.primary.type = COMBAT_MANADRAIN;
-		restore.primary.value = restoreDamage;
-		restore.augmented = true;
+	int32_t originalDamageValue = std::abs(originalDamage.primary.value);
+	auto transformed = this->transformDamage(COMBAT_MANADRAIN, ModifierTotals(flat, percent), originalDamageValue);
+	if (transformed.has_value()) {
+		CombatDamage restore = transformed.value();
+		int32_t restoreDamage = std::abs(restore.primary.value);
+		originalDamage.primary.value += std::min<int32_t>(restoreDamage, originalDamageValue);
 
 		auto restoreParams = CombatParams{};
-		restoreParams.origin = ORIGIN_AUGMENT;
-		restoreParams.combatType = COMBAT_MANADRAIN;
+		restoreParams.combatType = restore.primary.type;
+		restoreParams.origin = restore.origin;
 		restoreParams.impactEffect = CONST_ME_ENERGYHIT;
 		restoreParams.distanceEffect = CONST_ANI_NONE;
 
@@ -5950,7 +5923,6 @@ void Player::restoreManaFromDamage(std::optional<CreaturePtr> attacker,
 			Combat::doTargetCombat(nullptr, this->getPlayer(), restore, restoreParams);
 			return;
 		}
-
 		Combat::doTargetCombat(attacker.value(), this->getPlayer(), restore, restoreParams);
 	}
 }
@@ -5959,18 +5931,10 @@ void Player::reviveSoulFromDamage(std::optional<CreaturePtr> attacker,
 									CombatDamage& originalDamage,
 									int32_t percent,
 									int32_t flat) {
-	int32_t reviveDamage = 0;
 	const int32_t originalDamageValue = std::abs(originalDamage.primary.value);
-	if (percent) {
-		reviveDamage += originalDamageValue  * percent / 100;
-	}
-	if (flat) {
-		reviveDamage += flat;
-	}
-
+	int32_t reviveDamage = modifyTotals(originalDamageValue, percent, flat);
 	if (reviveDamage != 0) {
-		reviveDamage = std::min<int32_t>(reviveDamage,  originalDamageValue);
-		originalDamage.primary.value += reviveDamage;
+		originalDamage.primary.value += std::min<int32_t>(reviveDamage, originalDamageValue);
 
 		auto message = (attacker.has_value()) ?
 			"You gained " + std::to_string(reviveDamage) + " soul from " + attacker.value()->getName() + "'s attack." :
@@ -5985,18 +5949,10 @@ void Player::replenishStaminaFromDamage(std::optional<CreaturePtr> attacker,
 										CombatDamage& originalDamage,
 										int32_t percent,
 										int32_t flat) {
-	int32_t replenishDamage = 0;
 	const int32_t originalDamageValue = std::abs(originalDamage.primary.value);
-	if (percent) {
-		replenishDamage += originalDamageValue  * percent / 100;
-	}
-	if (flat) {
-		replenishDamage += flat;
-	}
-
+	int32_t replenishDamage = modifyTotals(originalDamageValue, percent, flat);
 	if (replenishDamage != 0) {
-		replenishDamage = std::min<int32_t>(replenishDamage,  originalDamageValue);
-		originalDamage.primary.value += replenishDamage;
+		originalDamage.primary.value += std::min<int32_t>(replenishDamage, originalDamageValue);
 
 		if (!g_config.getBoolean(ConfigManager::AUGMENT_STAMINA_RULE)) {
 			replenishDamage = replenishDamage / 60;
@@ -6016,18 +5972,10 @@ void Player::resistDamage(std::optional<CreaturePtr> attacker,
 							int32_t percent,
 							int32_t flat) const
 {
-	int32_t resistDamage = 0;
 	const int32_t originalDamageValue = std::abs(originalDamage.primary.value);
-	if (percent) {
-		resistDamage += originalDamageValue  * percent / 100;
-	}
-	if (flat) {
-		resistDamage += flat;
-	}
-
+	int32_t resistDamage = modifyTotals(originalDamageValue, percent, flat);
 	if (resistDamage != 0) {
-		resistDamage = std::min<int32_t>(resistDamage, originalDamageValue);
-		originalDamage.primary.value += resistDamage;
+		originalDamage.primary.value += std::min<int32_t>(resistDamage, originalDamageValue);
 		
 		auto message = (attacker.has_value()) ?
 			"You resisted " + std::to_string(resistDamage) + " damage from " + attacker.value()->getName() + "'s attack." :
@@ -6048,36 +5996,24 @@ void Player::reflectDamage(std::optional<CreaturePtr> attacker,
 		return;
 	}
 
-	int32_t reflectDamage = 0;
-	const int32_t originalDamageValue = std::abs(originalDamage.primary.value);
-	if (percent) {
-		reflectDamage += originalDamageValue  * percent / 100;
-	}
-	if (flat) {
-		reflectDamage += flat;
-	}
-
-	if (reflectDamage != 0)	{
-		const auto& target = attacker.value();
-		reflectDamage = std::min<int32_t>(reflectDamage, originalDamageValue);
-		originalDamage.primary.value += reflectDamage;
-
-		auto reflect = CombatDamage{};
-		reflect.primary.type = originalDamage.primary.type;
-		reflect.primary.value = (0 - reflectDamage);
-		reflect.origin = ORIGIN_AUGMENT;
-		reflect.augmented = true;
+	int32_t originalDamageValue = std::abs(originalDamage.primary.value);
+	auto transformed = this->transformDamage(originalDamage.primary.type, ModifierTotals(flat, percent), originalDamageValue);
+	if (transformed.has_value()) {
+		CombatDamage reflect = transformed.value();
+		int32_t reflectDamage = std::abs(reflect.primary.value);
+		originalDamage.primary.value += std::min<int32_t>(reflectDamage, originalDamageValue);
 
 		auto params = CombatParams{};
+		params.combatType = reflect.primary.type;
+		params.origin = reflect.origin;
 		params.distanceEffect = distanceEffect;
 		params.impactEffect = areaEffect;
-		params.origin = ORIGIN_AUGMENT;
-		params.combatType = originalDamage.primary.type;
 
+		const auto& target = attacker.value();
 		sendTextMessage(
-		MESSAGE_DAMAGE_DEALT,
-		 "You reflected " + std::to_string(reflectDamage) + " damage from " + target->getName() + "'s attack back at them."
-		 );
+			MESSAGE_DAMAGE_DEALT,
+			"You reflected " + std::to_string(reflectDamage) + " damage from " + target->getName() + "'s attack back at them."
+		);
 	
 		Combat::doTargetCombat(this->getPlayer(), target, reflect, params);
 	}
@@ -6091,50 +6027,34 @@ void Player::deflectDamage(std::optional<CreaturePtr> attackerOpt,
                           uint8_t areaEffect, 
                           uint8_t distanceEffect) {
 	
-    int32_t deflectDamage = 0;
-    const int32_t originalDamageValue = std::abs(originalDamage.primary.value);
+	int32_t originalDamageValue = std::abs(originalDamage.primary.value);
+	auto transformed = this->transformDamage(originalDamage.primary.type, ModifierTotals(flat, percent), originalDamageValue);
+	if (transformed.has_value()) {
+		CombatDamage deflect = transformed.value();
+		int32_t deflectDamage = std::abs(deflect.primary.value);
+		originalDamage.primary.value += std::min<int32_t>(deflectDamage, originalDamageValue);
 
-	if (percent) {
-		deflectDamage += originalDamageValue  * percent / 100;
-	}
-	if (flat) {
-		deflectDamage += flat;
-	}
-    
-    if (deflectDamage > 0) {
-    	deflectDamage = std::min(deflectDamage, originalDamageValue);
-    	originalDamage.primary.value += deflectDamage;
-        constexpr int32_t DAMAGE_DIVIDER = 50.0; // Should be moved to global config
+		constexpr int32_t DAMAGE_DIVIDER = 50.0; // Should be moved to global config
         constexpr int32_t MAX_TARGETS = 6.0;
-        const int32_t calculatedTargets = std::min<int32_t>(
-            std::round<int32_t>((deflectDamage) / DAMAGE_DIVIDER) + 1, 
-            MAX_TARGETS
-        );
-    	
-        auto defensePos = getPosition();
-        const auto attackPos = generateAttackPosition(attackerOpt, defensePos, paramOrigin);
-        const auto damageArea = generateDeflectArea(attackerOpt, calculatedTargets);
-    	
-        auto deflect = CombatDamage{};
-        deflect.primary.type = originalDamage.primary.type;
-        deflect.origin = ORIGIN_AUGMENT;
-        deflect.primary.value = -1 * std::round<int32_t>(deflectDamage / calculatedTargets);
-		deflect.augmented = true;
+        const int32_t calculatedTargets = std::min<int32_t>(std::round<int32_t>(deflect.primary.value / DAMAGE_DIVIDER) + 1, MAX_TARGETS);
+        deflect.primary.value = -std::round<int32_t>(deflect.primary.value / calculatedTargets);
     	
         auto params = CombatParams();
-        params.origin = ORIGIN_AUGMENT;
-        params.combatType = originalDamage.primary.type;
+		params.combatType = deflect.primary.type;
+		params.origin = deflect.origin;
         params.distanceEffect = distanceEffect;
         params.targetCasterOrTopMost = true;
-        params.impactEffect = (areaEffect == CONST_ME_NONE) 
-            ? CombatTypeToAreaEffect(originalDamage.primary.type) 
-            : areaEffect;
+        params.impactEffect = (areaEffect == CONST_ME_NONE) ? CombatTypeToAreaEffect(originalDamage.primary.type) : areaEffect;
     	
         sendTextMessage(
             MESSAGE_EVENT_DEFAULT,
             "You deflected " + std::to_string(deflectDamage) + " total damage."
         );
-    	
+
+		auto defensePos = getPosition();
+		const auto attackPos = generateAttackPosition(attackerOpt, defensePos, paramOrigin);
+		const auto damageArea = generateDeflectArea(attackerOpt, calculatedTargets);
+
         Combat::doAreaCombat(this->getPlayer(), attackPos, damageArea.get(), deflect, params);
     }
 }
@@ -6145,78 +6065,65 @@ void Player::ricochetDamage(CombatDamage& originalDamage,
 							uint8_t areaEffect,
 							uint8_t distanceEffect) {
 
-	int32_t ricochetDamage = 0;
-	const int32_t originalDamageValue = std::abs(originalDamage.primary.value);
-
-	if (percent) {
-		ricochetDamage += originalDamageValue  * percent / 100;
-	}
-	if (flat) {
-		ricochetDamage += flat;
-	}
-
 	auto targetList = getOpenPositionsInRadius(3);
+	if (targetList.size() > 0) {
+		int32_t originalDamageValue = std::abs(originalDamage.primary.value);
+		auto transformed = this->transformDamage(originalDamage.primary.type, ModifierTotals(flat, percent), originalDamageValue);
+		if (transformed.has_value()) {
+			CombatDamage ricochet = transformed.value();
+			int32_t ricochetDamage = std::abs(ricochet.primary.value);
+			originalDamage.primary.value += std::min<int32_t>(ricochetDamage, originalDamageValue);
 
-	if (ricochetDamage != 0 && targetList.size() > 0) {
-		const auto& targetPos = targetList[uniform_random(0, targetList.size() - 1)];
-		ricochetDamage = std::min(ricochetDamage, originalDamageValue);
-		originalDamage.primary.value += ricochetDamage;
+			auto params = CombatParams();
+			params.combatType = ricochet.primary.type;
+			params.origin = ricochet.origin;
+			params.distanceEffect = distanceEffect;
+			params.targetCasterOrTopMost = true;
+			params.impactEffect = (areaEffect == CONST_ME_NONE) ? CombatTypeToAreaEffect(originalDamage.primary.type) : areaEffect;
 
-		auto message = "An attack on you ricocheted " + std::to_string(ricochetDamage) + " damage.";
-		sendTextMessage(MESSAGE_EVENT_ADVANCE, message);
+			auto message = "An attack on you ricocheted " + std::to_string(ricochetDamage) + " damage.";
+			sendTextMessage(MESSAGE_EVENT_ADVANCE, message);
 
-		auto ricochet = CombatDamage{};
-		ricochet.primary.type = originalDamage.primary.type;
-		ricochet.primary.value = (0 - ricochetDamage);
-		ricochet.origin = ORIGIN_AUGMENT;
-		ricochet.augmented = true;
-
-		auto params = CombatParams();
-		params.origin = ORIGIN_AUGMENT;
-		params.combatType = originalDamage.primary.type;
-		params.distanceEffect = distanceEffect;
-		params.targetCasterOrTopMost = true;
-		params.impactEffect = (areaEffect == CONST_ME_NONE) ? CombatTypeToAreaEffect(originalDamage.primary.type) : areaEffect;
-
-		const auto& damageArea = std::make_unique<AreaCombat>();
-		damageArea->setupArea(Deflect1xArea, 5);
-		Combat::doAreaCombat(this->getPlayer(), targetPos, damageArea.get(), ricochet, params);
+			const auto& targetPos = targetList[uniform_random(0, targetList.size() - 1)];
+			const auto& damageArea = std::make_unique<AreaCombat>();
+			damageArea->setupArea(Deflect1xArea, 5);
+			Combat::doAreaCombat(this->getPlayer(), targetPos, damageArea.get(), ricochet, params);
+		}
 	}
+}
+
+std::optional <CombatDamage> Player::transformDamage(uint8_t combatTypeIndex, ModifierTotals modifierTotals, int32_t originalDamageValue) {
+	const CombatType_t combatType = indexToCombatType(combatTypeIndex);
+	
+	int32_t transformedDamage = modifyTotals(originalDamageValue, modifierTotals);
+	if (transformedDamage) {
+		auto transformed = CombatDamage{};
+		transformed.primary.type = combatType;
+		transformed.primary.value = -transformedDamage;
+		transformed.origin = ORIGIN_AUGMENT;
+		transformed.augmented = true;
+		return transformed;
+	}
+	return std::nullopt;
 }
 
 void Player::convertDamage(const CreaturePtr& target, CombatDamage& originalDamage, gtl::node_hash_map<uint8_t, ModifierTotals> conversionList) {
 	auto iter = conversionList.begin();
-
 	while (originalDamage.primary.value < 0 && iter != conversionList.end()) {
-		const CombatType_t combatType = indexToCombatType(iter->first);
-		const ModifierTotals& totals = iter->second;
-
-		int32_t convertedDamage = 0;
-		const int32_t percent = static_cast<int32_t>(totals.percentTotal);
-		const int32_t flat = static_cast<int32_t>(totals.flatTotal);
-		const int32_t originalDamageValue = std::abs(originalDamage.primary.value);
-		if (percent) {
-			convertedDamage += originalDamageValue * float(percent / 100);
-		}
-		if (flat) {
-			convertedDamage += flat;
-		}
-
-		if (convertedDamage != 0 && target) {
-			originalDamage.primary.value = 0;
-			
-			auto converted = CombatDamage{};
-			converted.primary.type = combatType;
-			converted.primary.value =  -convertedDamage;
-			converted.origin = ORIGIN_AUGMENT;
-			converted.augmented = true;
+		int32_t originalDamageValue = std::abs(originalDamage.primary.value);
+		auto transformed = this->transformDamage(iter->first, iter->second, originalDamageValue);
+		if (transformed.has_value() && target){
+			CombatDamage converted = transformed.value();
+			int32_t convertedDamage = std::abs(converted.primary.value);
+			originalDamage.primary.value += std::min<int32_t>(convertedDamage, originalDamageValue);
 
 			auto params = CombatParams{};
-			params.combatType = combatType;
-			params.origin = ORIGIN_AUGMENT;
+			params.combatType = converted.primary.type;
+			params.origin = converted.origin;
 			
-			auto message = "You converted " + std::to_string(originalDamageValue) + " " + getCombatName(originalDamage.primary.type) + " damage to " + std::to_string(convertedDamage) + " " + getCombatName(combatType) + " damage during an attack on " + target->getName() + ".";
-			sendTextMessage(MESSAGE_DAMAGE_DEALT, message);
+			if (params.combatType != originalDamage.primary.type) {
+				sendTextMessage(MESSAGE_DAMAGE_DEALT, "You converted " + std::to_string(originalDamageValue) + " " + getCombatName(originalDamage.primary.type) + " damage to " + std::to_string(convertedDamage) + " " + getCombatName(params.combatType) + " damage during an attack on " + target->getName() + ".");
+			}
 			Combat::doTargetCombat(this->getPlayer(), target, converted, params);
 		}
 		++iter;
@@ -6225,44 +6132,25 @@ void Player::convertDamage(const CreaturePtr& target, CombatDamage& originalDama
 
 void Player::reformDamage(std::optional<CreaturePtr> attacker, CombatDamage& originalDamage, gtl::node_hash_map<uint8_t, ModifierTotals> conversionList) {
 	auto iter = conversionList.begin();
-
 	while (originalDamage.primary.value < 0 && iter != conversionList.end()) {
-
-		CombatType_t combatType = indexToCombatType(iter->first);
-		const ModifierTotals& totals = iter->second;
-
-		int32_t reformedDamage = 0;
-		int32_t percent = static_cast<int32_t>(totals.percentTotal);
-		int32_t flat = static_cast<int32_t>(totals.flatTotal);
-		const int32_t originalDamageValue = std::abs(originalDamage.primary.value);
-		if (percent) {
-			reformedDamage += originalDamageValue  * percent / 100;
-		}
-		if (flat) {
-			reformedDamage += flat;
-		}
-
-		if (reformedDamage) {
-			reformedDamage = std::min<int32_t>(reformedDamage, originalDamageValue);
-			originalDamage.primary.value += reformedDamage;
-
-			auto reform = CombatDamage{};
-			reform.primary.type = combatType;
-			reform.primary.value = (0 - reformedDamage);
-			reform.origin = ORIGIN_AUGMENT;
-			reform.augmented = true;
+		int32_t originalDamageValue = std::abs(originalDamage.primary.value);
+		auto transformed = this->transformDamage(iter->first, iter->second, originalDamageValue);
+		if (transformed.has_value()) {
+			CombatDamage reformed = transformed.value();
+			int32_t reformedDamage = std::abs(reformed.primary.value);
+			originalDamage.primary.value += std::min<int32_t>(reformedDamage, originalDamageValue);
 
 			auto params = CombatParams{};
-			params.combatType = combatType;
-			params.origin = ORIGIN_AUGMENT;
-			
+			params.combatType = reformed.primary.type;
+			params.origin = reformed.origin;
+
 			auto message = (attacker.has_value()) ?
-				"You reformed " + std::to_string(reformedDamage) + " " + getCombatName(originalDamage.primary.type) + " damage from " + getCombatName(combatType) + " during an attack on you by " + attacker.value()->getName() + "." :
-				"You reformed " + std::to_string(reformedDamage) + " " + getCombatName(originalDamage.primary.type) + " damage from " + getCombatName(combatType) + ".";
+				"You reformed " + std::to_string(reformedDamage) + " " + getCombatName(originalDamage.primary.type) + " damage from " + getCombatName(params.combatType) + " during an attack on you by " + attacker.value()->getName() + "." :
+				"You reformed " + std::to_string(reformedDamage) + " " + getCombatName(originalDamage.primary.type) + " damage from " + getCombatName(params.combatType) + ".";
 			
 			sendTextMessage(MESSAGE_DAMAGE_DEALT, message);
 			auto target = (attacker.has_value()) ? attacker.value() : nullptr;
-			Combat::doTargetCombat(target, this->getPlayer(), reform, params);
+			Combat::doTargetCombat(target, this->getPlayer(), reformed, params);
 		}
 		++iter;
 	}
@@ -6370,19 +6258,10 @@ void Player::increaseDamage(	std::optional<CreaturePtr> attacker,
 								int32_t percent,
 								int32_t flat) const
 {
-	int32_t increasedDamage = 0;
 	const int32_t originalDamageValue = std::abs(originalDamage.primary.value);
-	if (percent) {
-		increasedDamage += originalDamageValue * percent / 100;
-	}
-
-	if (flat) {
-		increasedDamage += flat;
-	}
-
+	int32_t increasedDamage = modifyTotals(originalDamageValue, percent, flat);
 	if (increasedDamage != 0) {
-		increasedDamage = std::min<int32_t>(increasedDamage, originalDamageValue);
-		originalDamage.primary.value -= increasedDamage;
+		originalDamage.primary.value -= std::min<int32_t>(increasedDamage, originalDamageValue);
 
 		auto message = (attacker.has_value()) ?
 			"You took an additional " + std::to_string(increasedDamage) + " damage from " + attacker.value()->getName() + "'s attack." :
