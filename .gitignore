@@ -18,3 +18,4 @@ config.lua
 
 # CLion and other JetBrains tools
 /.idea
+/Black-Tek-Server.pdb

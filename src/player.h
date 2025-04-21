@@ -5,6 +5,7 @@
 #define FS_PLAYER_H
 
 #include "creature.h"
+#include "combat.h"
 #include "container.h"
 #include "cylinder.h"
 #include "outfit.h"
@@ -1415,7 +1416,7 @@ class Player final : public Creature, public Cylinder
 		Position generateAttackPosition(std::optional<CreaturePtr> attacker, Position& defensePosition, CombatOrigin origin);
 
 		std::unique_ptr<AreaCombat> generateDeflectArea(std::optional<CreaturePtr> attacker, int32_t targetCount) const;
-		std::optional <CombatDamage> transformDamage(uint8_t combatTypeIndex, ModifierTotals modifierTotals, const int32_t originalDamageValue);
+		std::pair<CombatDamage, CombatParams> transformDamage(uint8_t combatTypeIndex, ModifierTotals modifierTotals, CombatDamage& originalCombatDamage) const;
 		int32_t modifyTotals(const int32_t originalDamageValue, int32_t percent, int32_t flat) const {
 			int32_t transformedDamage = percent ? originalDamageValue * percent / 100 : 0;
 			return flat ? transformedDamage + flat : transformedDamage;

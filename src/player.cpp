@@ -5880,25 +5880,12 @@ void Player::absorbDamage(const std::optional<CreaturePtr> attacker,
 							CombatDamage& originalDamage,
 							int32_t percent,
 							int32_t flat) {
-	int32_t originalDamageValue = std::abs(originalDamage.primary.value);
-	auto transformed = this->transformDamage(COMBAT_HEALING, ModifierTotals(flat, percent), originalDamageValue);
-	if (transformed.has_value()) {
-		CombatDamage absorb = transformed.value();
-		int32_t absorbedDamage = std::abs(absorb.primary.value);
-		originalDamage.primary.value += std::min<int32_t>(absorbedDamage, originalDamageValue);
+	auto [combatDamage, combatParams] = this->transformDamage(COMBAT_HEALING, ModifierTotals(percent, flat), originalDamage);
+	if (combatDamage.primary.value) {
+		combatParams.impactEffect = CONST_ME_MAGIC_RED;
+		combatParams.distanceEffect = CONST_ANI_NONE;
 
-		auto absorbParams = CombatParams{};
-		absorbParams.combatType = absorb.primary.type;
-		absorbParams.origin = absorb.origin;
-		absorbParams.impactEffect = CONST_ME_MAGIC_RED;
-		absorbParams.distanceEffect = CONST_ANI_NONE;
-
-		if (!attacker.has_value()) {
-			Combat::doTargetCombat(nullptr, this->getPlayer(), absorb, absorbParams);
-			return;
-		}
-
-		Combat::doTargetCombat(attacker.value(), this->getPlayer(), absorb, absorbParams);
+		Combat::doTargetCombat(attacker.has_value() ? attacker.value() : nullptr, this->getPlayer(), combatDamage, combatParams);
 	}
 }
 
@@ -5906,24 +5893,12 @@ void Player::restoreManaFromDamage(std::optional<CreaturePtr> attacker,
 									CombatDamage& originalDamage,
 									int32_t percent,
 									int32_t flat) {
-	int32_t originalDamageValue = std::abs(originalDamage.primary.value);
-	auto transformed = this->transformDamage(COMBAT_MANADRAIN, ModifierTotals(flat, percent), originalDamageValue);
-	if (transformed.has_value()) {
-		CombatDamage restore = transformed.value();
-		int32_t restoreDamage = std::abs(restore.primary.value);
-		originalDamage.primary.value += std::min<int32_t>(restoreDamage, originalDamageValue);
-
-		auto restoreParams = CombatParams{};
-		restoreParams.combatType = restore.primary.type;
-		restoreParams.origin = restore.origin;
-		restoreParams.impactEffect = CONST_ME_ENERGYHIT;
-		restoreParams.distanceEffect = CONST_ANI_NONE;
-
-		if (!attacker.has_value()) {
-			Combat::doTargetCombat(nullptr, this->getPlayer(), restore, restoreParams);
-			return;
-		}
-		Combat::doTargetCombat(attacker.value(), this->getPlayer(), restore, restoreParams);
+	auto [combatDamage, combatParams] = this->transformDamage(COMBAT_MANADRAIN, ModifierTotals(percent, flat), originalDamage);
+	if (combatDamage.primary.value) {
+		combatParams.impactEffect = CONST_ME_ENERGYHIT;
+		combatParams.distanceEffect = CONST_ANI_NONE;
+		
+		Combat::doTargetCombat(attacker.has_value() ? attacker.value() : nullptr, this->getPlayer(), combatDamage, combatParams);
 	}
 }
 
@@ -5996,26 +5971,17 @@ void Player::reflectDamage(std::optional<CreaturePtr> attacker,
 		return;
 	}
 
-	int32_t originalDamageValue = std::abs(originalDamage.primary.value);
-	auto transformed = this->transformDamage(originalDamage.primary.type, ModifierTotals(flat, percent), originalDamageValue);
-	if (transformed.has_value()) {
-		CombatDamage reflect = transformed.value();
-		int32_t reflectDamage = std::abs(reflect.primary.value);
-		originalDamage.primary.value += std::min<int32_t>(reflectDamage, originalDamageValue);
-
-		auto params = CombatParams{};
-		params.combatType = reflect.primary.type;
-		params.origin = reflect.origin;
-		params.distanceEffect = distanceEffect;
-		params.impactEffect = areaEffect;
+	auto [combatDamage, combatParams] = this->transformDamage(originalDamage.primary.type, ModifierTotals(percent, flat), originalDamage);
+	if (combatDamage.primary.value) {
+		combatParams.distanceEffect = distanceEffect;
+		combatParams.impactEffect = areaEffect;
 
 		const auto& target = attacker.value();
 		sendTextMessage(
 			MESSAGE_DAMAGE_DEALT,
-			"You reflected " + std::to_string(reflectDamage) + " damage from " + target->getName() + "'s attack back at them."
+			"You reflected " + std::to_string(std::abs(combatDamage.primary.value)) + " damage from " + target->getName() + "'s attack back at them."
 		);
-	
-		Combat::doTargetCombat(this->getPlayer(), target, reflect, params);
+		Combat::doTargetCombat(this->getPlayer(), target, combatDamage, combatParams);
 	}
 }
 
@@ -6027,35 +5993,27 @@ void Player::deflectDamage(std::optional<CreaturePtr> attackerOpt,
                           uint8_t areaEffect, 
                           uint8_t distanceEffect) {
 	
-	int32_t originalDamageValue = std::abs(originalDamage.primary.value);
-	auto transformed = this->transformDamage(originalDamage.primary.type, ModifierTotals(flat, percent), originalDamageValue);
-	if (transformed.has_value()) {
-		CombatDamage deflect = transformed.value();
-		int32_t deflectDamage = std::abs(deflect.primary.value);
-		originalDamage.primary.value += std::min<int32_t>(deflectDamage, originalDamageValue);
-
+	auto [combatDamage, combatParams] = this->transformDamage(originalDamage.primary.type, ModifierTotals(percent, flat), originalDamage);
+	if (combatDamage.primary.value) {
 		constexpr int32_t DAMAGE_DIVIDER = 50.0; // Should be moved to global config
         constexpr int32_t MAX_TARGETS = 6.0;
-        const int32_t calculatedTargets = std::min<int32_t>(std::round<int32_t>(deflect.primary.value / DAMAGE_DIVIDER) + 1, MAX_TARGETS);
-        deflect.primary.value = -std::round<int32_t>(deflect.primary.value / calculatedTargets);
-    	
-        auto params = CombatParams();
-		params.combatType = deflect.primary.type;
-		params.origin = deflect.origin;
-        params.distanceEffect = distanceEffect;
-        params.targetCasterOrTopMost = true;
-        params.impactEffect = (areaEffect == CONST_ME_NONE) ? CombatTypeToAreaEffect(originalDamage.primary.type) : areaEffect;
+        const int32_t calculatedTargets = std::min<int32_t>(std::round<int32_t>(combatDamage.primary.value / DAMAGE_DIVIDER) + 1, MAX_TARGETS);
+		combatDamage.primary.value = -std::round<int32_t>(combatDamage.primary.value / calculatedTargets);
+
+		combatParams.distanceEffect = distanceEffect;
+		combatParams.targetCasterOrTopMost = true;
+		combatParams.impactEffect = (areaEffect == CONST_ME_NONE) ? CombatTypeToAreaEffect(originalDamage.primary.type) : areaEffect;
     	
         sendTextMessage(
             MESSAGE_EVENT_DEFAULT,
-            "You deflected " + std::to_string(deflectDamage) + " total damage."
+            "You deflected " + std::to_string(std::abs(combatDamage.primary.value)) + " total damage."
         );
 
 		auto defensePos = getPosition();
 		const auto attackPos = generateAttackPosition(attackerOpt, defensePos, paramOrigin);
 		const auto damageArea = generateDeflectArea(attackerOpt, calculatedTargets);
-
-        Combat::doAreaCombat(this->getPlayer(), attackPos, damageArea.get(), deflect, params);
+        
+		Combat::doAreaCombat(this->getPlayer(), attackPos, damageArea.get(), combatDamage, combatParams);
     }
 }
 
@@ -6065,94 +6023,69 @@ void Player::ricochetDamage(CombatDamage& originalDamage,
 							uint8_t areaEffect,
 							uint8_t distanceEffect) {
 
+
 	auto targetList = getOpenPositionsInRadius(3);
 	if (targetList.size() > 0) {
-		int32_t originalDamageValue = std::abs(originalDamage.primary.value);
-		auto transformed = this->transformDamage(originalDamage.primary.type, ModifierTotals(flat, percent), originalDamageValue);
-		if (transformed.has_value()) {
-			CombatDamage ricochet = transformed.value();
-			int32_t ricochetDamage = std::abs(ricochet.primary.value);
-			originalDamage.primary.value += std::min<int32_t>(ricochetDamage, originalDamageValue);
+		auto [combatDamage, combatParams] = this->transformDamage(originalDamage.primary.type, ModifierTotals(percent, flat), originalDamage);
+		if (combatDamage.primary.value) {
+			combatParams.distanceEffect = distanceEffect;
+			combatParams.targetCasterOrTopMost = true;
+			combatParams.impactEffect = (areaEffect == CONST_ME_NONE) ? CombatTypeToAreaEffect(originalDamage.primary.type) : areaEffect;
 
-			auto params = CombatParams();
-			params.combatType = ricochet.primary.type;
-			params.origin = ricochet.origin;
-			params.distanceEffect = distanceEffect;
-			params.targetCasterOrTopMost = true;
-			params.impactEffect = (areaEffect == CONST_ME_NONE) ? CombatTypeToAreaEffect(originalDamage.primary.type) : areaEffect;
-
-			auto message = "An attack on you ricocheted " + std::to_string(ricochetDamage) + " damage.";
+			auto message = "An attack on you ricocheted " + std::to_string(std::abs(combatDamage.primary.value)) + " damage.";
 			sendTextMessage(MESSAGE_EVENT_ADVANCE, message);
 
 			const auto& targetPos = targetList[uniform_random(0, targetList.size() - 1)];
 			const auto& damageArea = std::make_unique<AreaCombat>();
 			damageArea->setupArea(Deflect1xArea, 5);
-			Combat::doAreaCombat(this->getPlayer(), targetPos, damageArea.get(), ricochet, params);
+			Combat::doAreaCombat(this->getPlayer(), targetPos, damageArea.get(), combatDamage, combatParams);
 		}
 	}
 }
 
-std::optional <CombatDamage> Player::transformDamage(uint8_t combatTypeIndex, ModifierTotals modifierTotals, int32_t originalDamageValue) {
-	const CombatType_t combatType = indexToCombatType(combatTypeIndex);
+std::pair<CombatDamage, CombatParams> Player::transformDamage(uint8_t combatTypeIndex, ModifierTotals modifierTotals, CombatDamage& originalCombatDamage) const {
+	CombatDamage combatDamage = CombatDamage{};
+	CombatParams combatParams = CombatParams{};
 	
-	int32_t transformedDamage = modifyTotals(originalDamageValue, modifierTotals);
-	if (transformedDamage) {
-		auto transformed = CombatDamage{};
-		transformed.primary.type = combatType;
-		transformed.primary.value = -transformedDamage;
-		transformed.origin = ORIGIN_AUGMENT;
-		transformed.augmented = true;
-		return transformed;
+	int32_t originalDamageValue = std::abs(originalCombatDamage.primary.value);
+	int32_t transformedDamageValue = modifyTotals(originalDamageValue, modifierTotals);
+	if (transformedDamageValue) {
+		originalCombatDamage.primary.value += std::min<int32_t>(transformedDamageValue, originalDamageValue);
+
+		combatDamage.primary.type = indexToCombatType(combatTypeIndex);
+		combatDamage.primary.value = -transformedDamageValue;
+		combatDamage.origin = ORIGIN_AUGMENT;
+		combatDamage.augmented = true;
+
+		combatParams.combatType = combatDamage.primary.type;
+		combatParams.origin = combatDamage.origin;
 	}
-	return std::nullopt;
+	return { std::move(combatDamage), std::move(combatParams) };
 }
 
 void Player::convertDamage(const CreaturePtr& target, CombatDamage& originalDamage, gtl::node_hash_map<uint8_t, ModifierTotals> conversionList) {
-	auto iter = conversionList.begin();
-	while (originalDamage.primary.value < 0 && iter != conversionList.end()) {
-		int32_t originalDamageValue = std::abs(originalDamage.primary.value);
-		auto transformed = this->transformDamage(iter->first, iter->second, originalDamageValue);
-		if (transformed.has_value() && target){
-			CombatDamage converted = transformed.value();
-			int32_t convertedDamage = std::abs(converted.primary.value);
-			originalDamage.primary.value += std::min<int32_t>(convertedDamage, originalDamageValue);
-
-			auto params = CombatParams{};
-			params.combatType = converted.primary.type;
-			params.origin = converted.origin;
-			
-			if (params.combatType != originalDamage.primary.type) {
-				sendTextMessage(MESSAGE_DAMAGE_DEALT, "You converted " + std::to_string(originalDamageValue) + " " + getCombatName(originalDamage.primary.type) + " damage to " + std::to_string(convertedDamage) + " " + getCombatName(params.combatType) + " damage during an attack on " + target->getName() + ".");
+	for (auto iter = conversionList.begin(); originalDamage.primary.value < 0 && iter != conversionList.end(); iter++) {
+		auto [combatDamage, combatParams] = this->transformDamage(iter->first, iter->second, originalDamage);
+		if (combatDamage.primary.value && target) {
+			if (combatDamage.primary.type != originalDamage.primary.type) {
+				sendTextMessage(MESSAGE_DAMAGE_DEALT, "You converted " + std::to_string(std::abs(originalDamage.primary.value)) + " " + getCombatName(originalDamage.primary.type) + " damage to " + std::to_string(combatDamage.primary.value) + " " + getCombatName(combatDamage.primary.type) + " damage during an attack on " + target->getName() + ".");
 			}
-			Combat::doTargetCombat(this->getPlayer(), target, converted, params);
+			Combat::doTargetCombat(this->getPlayer(), target, combatDamage, combatParams);
 		}
-		++iter;
 	}
 }
 
 void Player::reformDamage(std::optional<CreaturePtr> attacker, CombatDamage& originalDamage, gtl::node_hash_map<uint8_t, ModifierTotals> conversionList) {
-	auto iter = conversionList.begin();
-	while (originalDamage.primary.value < 0 && iter != conversionList.end()) {
-		int32_t originalDamageValue = std::abs(originalDamage.primary.value);
-		auto transformed = this->transformDamage(iter->first, iter->second, originalDamageValue);
-		if (transformed.has_value()) {
-			CombatDamage reformed = transformed.value();
-			int32_t reformedDamage = std::abs(reformed.primary.value);
-			originalDamage.primary.value += std::min<int32_t>(reformedDamage, originalDamageValue);
-
-			auto params = CombatParams{};
-			params.combatType = reformed.primary.type;
-			params.origin = reformed.origin;
-
+	for (auto iter = conversionList.begin(); originalDamage.primary.value < 0 && iter != conversionList.end(); iter++) {
+		auto [combatDamage, combatParams] = this->transformDamage(iter->first, iter->second, originalDamage);
+		if (combatDamage.primary.value) {
 			auto message = (attacker.has_value()) ?
-				"You reformed " + std::to_string(reformedDamage) + " " + getCombatName(originalDamage.primary.type) + " damage from " + getCombatName(params.combatType) + " during an attack on you by " + attacker.value()->getName() + "." :
-				"You reformed " + std::to_string(reformedDamage) + " " + getCombatName(originalDamage.primary.type) + " damage from " + getCombatName(params.combatType) + ".";
+				"You reformed " + std::to_string(std::abs(combatDamage.primary.value)) + " " + getCombatName(originalDamage.primary.type) + " damage from " + getCombatName(combatParams.combatType) + " during an attack on you by " + attacker.value()->getName() + "." :
+				"You reformed " + std::to_string(std::abs(combatDamage.primary.value)) + " " + getCombatName(originalDamage.primary.type) + " damage from " + getCombatName(combatParams.combatType) + ".";
 			
 			sendTextMessage(MESSAGE_DAMAGE_DEALT, message);
-			auto target = (attacker.has_value()) ? attacker.value() : nullptr;
-			Combat::doTargetCombat(target, this->getPlayer(), reformed, params);
+			Combat::doTargetCombat(attacker.has_value() ? attacker.value() : nullptr, this->getPlayer(), combatDamage, combatParams);
 		}
-		++iter;
 	}
 }
 

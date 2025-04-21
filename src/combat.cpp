@@ -827,11 +827,13 @@ void Combat::doTargetCombat(const CreaturePtr& caster, const CreaturePtr& target
 			attackModData.reserve(ATTACK_MODIFIER_LAST);
 			attackModData = casterPlayer->getAttackModifierTotals(damage.primary.type, damage.origin, targetType, target->getRace(), target->getName());
 			/// we do conversion here incase someone wants to convert say healing to mana or mana to death.
-			const auto& conversionTotals = casterPlayer->getConvertedTotals(ATTACK_MOD, damage.primary.type, damage.origin, targetType, target->getRace(), target->getName());
-			if (!conversionTotals.empty() and not isAugmented) {
-				casterPlayer->convertDamage(target->getCreature(), damage, conversionTotals);
-				if (damage.primary.value == 0) {
-					return;
+			if (!isAugmented) {
+				const auto& conversionTotals = casterPlayer->getConvertedTotals(ATTACK_MOD, damage.primary.type, damage.origin, targetType, target->getRace(), target->getName());
+				if (!conversionTotals.empty()) {
+					casterPlayer->convertDamage(target->getCreature(), damage, conversionTotals);
+					if (damage.primary.value == 0) {
+						return;
+					}
 				}
 			}
 			if (damage.primary.type != COMBAT_MANADRAIN and damage.primary.type != COMBAT_HEALING) {
