@@ -9,6 +9,9 @@
 # Build Output
 /build
 
+*.dll
+*.exe
+
 # VCPKG Dependencies
 /vcpkg_installed
 
