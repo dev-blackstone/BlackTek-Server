@@ -131,7 +131,7 @@ void ProtocolGame::login(uint32_t characterId, uint32_t accountId, OperatingSyst
 	//dispatcher thread
 	const auto& foundPlayer = g_game.getPlayerByGUID(characterId);
 	const auto managerEnabled = g_config.getBoolean(ConfigManager::ENABLE_ACCOUNT_MANAGER);
-	const auto isAccountManager = characterId == AccountManager::ID and managerEnabled;
+	const auto isAccountManager = characterId == AccountManager::getId() and managerEnabled;
 	if (not foundPlayer or g_config.getBoolean(ConfigManager::ALLOW_CLONES) or isAccountManager) {
 		player = Player::makePlayer(getThis());
 		
@@ -158,7 +158,7 @@ void ProtocolGame::login(uint32_t characterId, uint32_t accountId, OperatingSyst
 			return;
 		}
 
-		if (g_config.getBoolean(ConfigManager::ONE_PLAYER_ON_ACCOUNT) and characterId != AccountManager::ID and player->getAccountType() < ACCOUNT_TYPE_GAMEMASTER and g_game.getPlayerByAccount(player->getAccount())) {
+		if (g_config.getBoolean(ConfigManager::ONE_PLAYER_ON_ACCOUNT) and characterId != AccountManager::getId() and player->getAccountType() < ACCOUNT_TYPE_GAMEMASTER and g_game.getPlayerByAccount(player->getAccount())) {
 			disconnectClient("You may only login with one character\nof your account at the same time.");
 			return;
 		}
@@ -392,8 +392,8 @@ void ProtocolGame::onRecvFirstMessage(NetworkMessage& msg)
 		and g_config.getBoolean(ConfigManager::ENABLE_ACCOUNT_MANAGER)
 		and g_config.getBoolean(ConfigManager::ENABLE_NO_PASS_LOGIN)) {
 
-		accountName = g_config.getString(ConfigManager::ACCOUNT_MANAGER_AUTH);
-		password = g_config.getString(ConfigManager::ACCOUNT_MANAGER_AUTH);
+		accountName = AccountManager::getAuth();
+		password = AccountManager::getAuth();
 	} 
 
 	if (g_game.getGameState() == GAME_STATE_STARTUP) {
@@ -1043,7 +1043,7 @@ void ProtocolGame::parseTextWindow(NetworkMessage& msg)
 	}
 	else
 	{
-		if (player->getAccount() == 1)
+		if (player->getAccount() == AccountManager::getAccountId())
 		{
 			addGameTask([windowTextID, playerID = player->getID(), newText = std::string{ newText }]() { g_game.onAccountManagerRecieveText(playerID, windowTextID, newText); });
 		} 

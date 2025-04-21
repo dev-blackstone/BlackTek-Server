@@ -3681,7 +3681,7 @@ ModalWindow Game::CreatePrivateAccountManagerWindow(const uint32_t modalWindowId
 			break;
 		}
 
-		case AccountManager::PRIVATE_PASSSWORD_MISMATCH: // says passwords don't match
+		case AccountManager::PRIVATE_PASSWORD_MISMATCH: // says passwords don't match
 		{
 			window.title = "Invalid Password!";
 			window.message = "I'm sorry, but that didn't quite match what you entered the first time. Please ensure you enter the same password you entered before..\nAre you ready to proceed? Or shall we start again?";
@@ -3975,7 +3975,7 @@ void Game::onPrivateAccountManagerInput(const PlayerPtr& player, const uint32_t 
 
 		}
 
-		case AccountManager::PRIVATE_PASSSWORD_MISMATCH:
+		case AccountManager::PRIVATE_PASSWORD_MISMATCH:
 		{
 
 			if (button == ButtonID::PRIMARY) // Retry
@@ -4144,7 +4144,7 @@ void Game::onPrivateAccountManagerRecieveText(const uint32_t player_id, uint32_t
 				break;
 			} // else
 
-			player->sendModalWindow(CreatePrivateAccountManagerWindow(AccountManager::PRIVATE_PASSSWORD_MISMATCH));
+			player->sendModalWindow(CreatePrivateAccountManagerWindow(AccountManager::PRIVATE_PASSWORD_MISMATCH));
 			break;
 		}
 
@@ -4247,7 +4247,7 @@ void Game::onPrivateAccountManagerRecieveText(const uint32_t player_id, uint32_t
 				break;
 			}
 
-			player->sendModalWindow(CreatePrivateAccountManagerWindow(AccountManager::PRIVATE_PASSSWORD_MISMATCH));
+			player->sendModalWindow(CreatePrivateAccountManagerWindow(AccountManager::PRIVATE_PASSWORD_MISMATCH));
 			break;
 		}
 
@@ -4282,7 +4282,7 @@ ModalWindow Game::CreateAccountManagerWindow(const uint32_t modalWindowId)
 		case AccountManager::COMMON_LOGIN:
 		{
 			window.title = "Welcome!";
-			window.message = "Welcome new spririt, are you ready to begin your destiny?";
+			window.message = "Welcome new spirit, are you ready to begin your destiny?";
 			break;
 		}
 
@@ -4535,7 +4535,7 @@ void Game::doAccountManagerLogin(const PlayerPtr& player)
 	player->setTempPassword("");
 	player->setAccountManagerLastState(0);
 
-	auto isUnregisteredAccount = (player->getAccount() == 1);
+	auto isUnregisteredAccount = player->getAccount() == AccountManager::getAccountId();
 	// make enums for the window ids
 
 	if (isUnregisteredAccount)
@@ -6714,7 +6714,7 @@ void Game::playerAnswerModalWindow(const uint32_t playerId, const uint32_t modal
 
 	if (player->isAccountManager()) 
 	{
-		if (player->getAccount() == 1) 
+		if (player->getAccount() == AccountManager::getAccountId()) 
 		{
 			g_game.onAccountManagerInput(player, modalWindowId, button, choice);
 		}

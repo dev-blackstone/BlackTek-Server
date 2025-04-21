@@ -111,7 +111,7 @@ public:
         PRIVATE_PASSWORD_CONFIRMATION,
         PRIVATE_PASSWORD_SUCCESS,
         PRIVATE_PASSWORD_FAILED,
-        PRIVATE_PASSSWORD_MISMATCH,
+        PRIVATE_PASSWORD_MISMATCH,
         PRIVATE_PASSWORD_RESET,
         PRIVATE_PASSWORD_RESET_CONFIRMATION,
         PRIVATE_PASSWORD_RESET_SUCCESS,
@@ -121,9 +121,10 @@ public:
 
 
     static void initialize();
-    static constexpr int32_t ID = 1;
+    static int32_t getId();
+    static int32_t getAccountId();
+    static std::string getAuth();
     static constexpr auto NAME = "Account Manager";
-    static constexpr auto AUTH = "1"; // make this one the config.lua option
     static constexpr auto toml_path = "/config/accountmanager.toml";
 };
 

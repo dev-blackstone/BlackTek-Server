@@ -25,7 +25,7 @@ Account IOLoginData::loadAccount(uint32_t accno)
 {
 	Account account;
 
-	DBResult_ptr result = Database::getInstance().storeQuery(fmt::format("SELECT `id`, `name`, `password`, `type`, `premium_ends_at` FROM `accounts` WHERE `id` = {:d}", accno));
+	DBResult_ptr result = Database::getInstance().storeQuery(fmt::format("SELECT `id`, `name`, `type`, `premium_ends_at` FROM `accounts` WHERE `id` = {:d}", accno));
 	if (!result) {
 		return account;
 	}
@@ -85,7 +85,7 @@ bool IOLoginData::loginserverAuthentication(const std::string& name, const std::
 	account.accountType = static_cast<AccountType_t>(result->getNumber<int32_t>("type"));
 	account.premiumEndsAt = result->getNumber<time_t>("premium_ends_at");
 
-	if (g_config.getBoolean(ConfigManager::ENABLE_ACCOUNT_MANAGER) and account.id != AccountManager::ID) {
+	if (g_config.getBoolean(ConfigManager::ENABLE_ACCOUNT_MANAGER) and account.id != AccountManager::getAccountId()) {
 		account.characters.push_back(AccountManager::NAME);
 	}
 

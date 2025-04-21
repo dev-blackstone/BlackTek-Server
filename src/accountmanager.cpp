@@ -3,6 +3,12 @@
 #include "otpch.h"
 #include "game.h"
 
+#include "configmanager.h"
+#include "iologindata.h"
+
+extern ConfigManager g_config;
+
+
 void AccountManager::initialize()
 {
 	const auto file = std::filesystem::current_path().generic_string() + "/config/account_manager.toml";
@@ -102,4 +108,19 @@ void AccountManager::initialize()
 	{
 		std::cerr << "Failed to load account_manager.toml - " << e.what() << std::endl;
 	}
+}
+
+int32_t AccountManager::getId()
+{
+	return IOLoginData::getGuidByName(NAME);
+}
+
+int32_t AccountManager::getAccountId()
+{
+	return IOLoginData::getAccountIdByPlayerName(NAME);
+}
+
+std::string AccountManager::getAuth()
+{
+	return g_config.getString(ConfigManager::ACCOUNT_MANAGER_AUTH);
 }
